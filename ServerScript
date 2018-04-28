@@ -1,0 +1,48 @@
+#!/bin/bash
+which -s psql
+if [ "$?" != '0' ]; then
+	echo "You do not have psql installed"
+	exit
+fi
+if [ "$1" == "CreateDump" ]; then
+	if [ "$( psql -tAc "SELECT 1 FROM pg_database WHERE datname='LariumDB'" )" = '1' ]; then
+		echo "Creating dump..."
+		pg_dump -U $USER LariumDB > Sources/Data/dbexport.pgsql
+		echo "Dump created in Source/Data/"
+	else
+		echo "LariumDB does not exist"
+	fi
+fi
+if [ "$1" == "CreateDB" ]; then
+	if [ "$( psql -tAc "SELECT 1 FROM pg_database WHERE datname='LariumDB'" )" = '1' ]; then
+		while ( [ "$K" != "y" ] && [ "$K" != "n" ]  ) do
+			echo "LariumDB already exists, do you want to replace it? y/n"
+			read -n 1 K
+			echo
+		done
+		if [ "$K" == "y" ]; then
+			echo "Deleting previous LariumDB..."
+			dropdb LariumDB
+		else
+			exit
+		fi
+	fi
+	echo "Creating new LariumDB"
+	createdb LariumDB
+	echo "Exporting data from dbexport.pqsl"
+	psql -U $USER LariumDB < Sources/Data/dbexport.pgsql
+	echo "LariumDB now contains data from dbexport.pgsql"
+fi
+if [ "$1" == "RunServer" ]; then
+	if [ "$( psql -tAc "SELECT 1 FROM pg_database WHERE datname='LariumDB'" )" != '1' ]; then
+		echo "Creating new LariumDB"
+		create LariumDB
+		echo "Exporting data from dbexport.pgsql"
+		psql -U $USER LariumDB < Sources/Data/dbexport.pgsql	
+	fi
+	swift package resolve
+	echo "Building dependencies..."
+	swift build
+	echo "Running server..."
+	swift run
+fi
