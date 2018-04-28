@@ -1,4 +1,7 @@
-### How to run server
+### How to run the server
+    ./ServerScript RunServer
+    
+### if it does not work
     chmod 777 ServerScript
     ./ServerScript RunServer
 
