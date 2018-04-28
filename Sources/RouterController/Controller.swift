@@ -23,6 +23,11 @@ public class Controller{
         self.port = port
         self.dataBase = try PostgresDataBase()
         
+        // remove kitura start page
+        router.all(""){request, response, next in
+            try response.status(.notFound).end()
+        }
+        
         // public api
         router.get("api/getCityList", handler: getCityList)
         
@@ -39,8 +44,12 @@ public class Controller{
         router.get("api/getMasterSchedule", handler: getMasterSchedule)//
         
         // salon private api
-        router.post("api/salon/registration", handler: postSalonRegistration)
+        router.post("api/salon/signUp", handler: postSalonSignUp)
         
+        router.post("api/salon/signIn", handler: postSalonSignIn)
+        
+        router.all("api/salon/postSalonInfo", middleware: BodyParser())
+        router.post("api/salon/postSalonInfo", handler: postSalonInfo)
         
     }
     //

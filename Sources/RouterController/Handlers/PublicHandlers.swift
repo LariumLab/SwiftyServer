@@ -5,9 +5,12 @@ import PerfectPostgreSQL
 import LogicalClasses
 
 extension Controller{
+    
+//************************************************************************************************************************//
+    
     func getCityList(_ : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
         let salonTable = self.dataBase.salonTable
-        let values = try salonTable.order(by: \.city).select()
+        let values = try salonTable.order(by: \.city).where(\Salon.city != "").select()
         var citySet: [String] = []
         for salon in values{
             if ((citySet.count == 0) || (salon.city != citySet.last)){
@@ -15,6 +18,14 @@ extension Controller{
             }
         }
         try response.status(.OK).send(citySet).end()
+    }
+    
+//************************************************************************************************************************//
+    
+    fileprivate struct SalonPreview: Codable{
+        let customName: String
+        let address: String
+        let ID: UUID
     }
     
     func getSalonListInCity(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
@@ -29,6 +40,14 @@ extension Controller{
             salonSet.append(SalonPreview(customName: salon.customName, address: salon.address, ID: salon.salonID))
         }
         try response.status(.OK).send(salonSet).end()
+    }
+    
+//************************************************************************************************************************//
+    
+    fileprivate struct SalonInfo: Codable{
+        let nickName: String
+        let phoneNumber: String
+        let description: String
     }
     
     func getSalonInfo(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
@@ -57,7 +76,10 @@ extension Controller{
             try response.status(.OK).send(salonInfo).end()
         }
     }
-    ////////////////////////undone
+    
+//************************************************************************************************************************//
+    
+    //////////////////////// undone
     func getSalonServices(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
         guard let salonName = request.queryParameters["salonName"], salonName != "" else{
             try response.status(.badRequest).end()

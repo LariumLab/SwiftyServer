@@ -14,7 +14,7 @@ public class PostgresDataBase{
     
     public init() throws{
         
-        dataBase = Database(configuration: try PostgresDatabaseConfiguration(database: "meh2", host: "localhost"))
+        dataBase = Database(configuration: try PostgresDatabaseConfiguration(database: "LariumDB", host: "localhost"))
         
         try dataBase.create(Client.self)
         try dataBase.create(Salon.self)

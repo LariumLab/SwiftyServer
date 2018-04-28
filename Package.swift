@@ -12,9 +12,10 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/IBM-Swift/Kitura.git", from: "2.0.0"),
-        .package(url: "https://github.com/PerfectlySoft/Perfect-PostgreSQL.git", from: "3.0.0"),
-        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .exact("0.8.0"))
+        .package(url: "https://github.com/IBM-Swift/Kitura.git", .exact("2.3.0")),
+        .package(url: "https://github.com/PerfectlySoft/Perfect-PostgreSQL.git", .exact("3.1.1")),
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .exact("0.8.0")),
+        .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", .exact("4.1.0"))
     ],
     targets: [
         .target(
@@ -22,7 +23,7 @@ let package = Package(
             dependencies: ["Kitura", "RouterController", "Data"]),
         .target(
             name: "RouterController",
-            dependencies: ["Kitura", "PerfectPostgreSQL", "LogicalClasses", "Data", "CryptoSwift"]),
+            dependencies: ["Kitura", "PerfectPostgreSQL", "LogicalClasses", "Data", "CryptoSwift","SwiftyJSON"]),
         .target(
         name: "Data",
             dependencies: ["PerfectPostgreSQL", "LogicalClasses"]),
