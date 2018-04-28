@@ -36,7 +36,7 @@ fi
 if [ "$1" == "RunServer" ]; then
 	if [ "$( psql -tAc "SELECT 1 FROM pg_database WHERE datname='LariumDB'" )" != '1' ]; then
 		echo "Creating new LariumDB"
-		create LariumDB
+		createdb LariumDB
 		echo "Exporting data from dbexport.pgsql"
 		psql -U $USER LariumDB < Sources/Data/dbexport.pgsql	
 	fi
