@@ -1,8 +1,5 @@
 ### How to run the server
-    ./ServerScript RunServer
-    
-### if it does not work
-    chmod 777 ServerScript
+    (chmod u+x ServerScript)
     ./ServerScript RunServer
 
 ### SwiftyServer API
