@@ -30,7 +30,7 @@ extension Controller{
         let salt = "SwiftyServer"
         let tokenString = phoneNumber + salt + password
         let token = tokenString.md5()
-        let client = Client(nickName: nickName, token: token)
+        let client = Client(clientID: UUID(), phoneNumber: phoneNumber, name: name, token: token)
         try clientTable.insert(client)
         try response.status(.OK).send(token).end()
     }

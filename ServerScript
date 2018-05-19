@@ -4,7 +4,7 @@ if [ "$?" != '0' ]; then
 	echo "You do not have psql installed"
 	exit
 fi
-if [ "$1" == "CreateDump" ]; then
+if [ "$1" == "dump" ]; then
 	if [ "$( psql -tAc "SELECT 1 FROM pg_database WHERE datname='LariumDB'" )" = '1' ]; then
 		echo "Creating dump..."
 		pg_dump -U $USER LariumDB > Sources/Data/dbexport.pgsql
@@ -13,7 +13,7 @@ if [ "$1" == "CreateDump" ]; then
 		echo "LariumDB does not exist"
 	fi
 fi
-if [ "$1" == "CreateDB" ]; then
+if [ "$1" == "import" ]; then
 	if [ "$( psql -tAc "SELECT 1 FROM pg_database WHERE datname='LariumDB'" )" = '1' ]; then
 		while ( [ "$K" != "y" ] && [ "$K" != "n" ]  ) do
 			echo "LariumDB already exists, do you want to replace it? y/n"
@@ -33,7 +33,7 @@ if [ "$1" == "CreateDB" ]; then
 	psql -U $USER LariumDB < Sources/Data/dbexport.pgsql
 	echo "LariumDB now contains data from dbexport.pgsql"
 fi
-if [ "$1" == "RunServer" ]; then
+if [ "$1" == "run" ]; then
 	if [ "$( psql -tAc "SELECT 1 FROM pg_database WHERE datname='LariumDB'" )" != '1' ]; then
 		echo "Creating new LariumDB"
 		createdb LariumDB
