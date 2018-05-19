@@ -110,6 +110,19 @@ CREATE TABLE public.service (
 ALTER TABLE public.service OWNER TO glebvasyutin;
 
 --
+-- Name: servicetomaster; Type: TABLE; Schema: public; Owner: glebvasyutin
+--
+
+CREATE TABLE public.servicetomaster (
+    salonid uuid NOT NULL,
+    serviceid uuid NOT NULL,
+    masterid uuid NOT NULL
+);
+
+
+ALTER TABLE public.servicetomaster OWNER TO glebvasyutin;
+
+--
 -- Data for Name: appointment; Type: TABLE DATA; Schema: public; Owner: glebvasyutin
 --
 
@@ -138,11 +151,11 @@ COPY public.master (salonid, name) FROM stdin;
 --
 
 COPY public.salon (salonid, nickname, customname, phonenumber, description, city, address, token) FROM stdin;
-4ad6b313-3026-43f8-99df-b969cdc1d95d	qwerty	Tatoo by Gleb	79104452059	The best choice	Moscow	Kremlin	5411aa4b553a4fd6331dbe9bb7f5abc6
 5887a1ec-5977-415e-bff4-cf6e68e4e946	beautyworld	My dream salon	79105678968	Best prices	Los Angeles	Second road, 3	f613755c82c91c5bb0a81d923a948379
 c69fbe76-ee7d-4832-8c60-28b4bb609f40	beautyfactory	Фабрика красоты	79101234441	Самые интересные предложения	Москва	Кутузовский, 12	da97ca6a2563cb9e30d69182896b2cf9
 03b41ba6-8df4-45e8-8c85-975b82d62083	hairmaster	ilovetatoo	79161234657	Лучшие тату только у нас	Москва	Кастанаевская, 12	1da9f7a1ef5551fec6b23764b0db875c
 95e51534-d8d6-41c9-856d-e63faec9aa16	nicenails	nails4ever	79165672343	Красим ногти	Самара	Ленина, 12	5eb094cd723d395b7b30d50739c1d6ae
+4ad6b313-3026-43f8-99df-b969cdc1d95d	qwerty	Tatoo by Gleb	79104452059	o my god	Moscow	Kremlin	5411aa4b553a4fd6331dbe9bb7f5abc6
 \.
 
 
@@ -151,6 +164,16 @@ c69fbe76-ee7d-4832-8c60-28b4bb609f40	beautyfactory	Фабрика красоты
 --
 
 COPY public.service (salonid, serviceid, name, description, pricefrom, priceto) FROM stdin;
+4ad6b313-3026-43f8-99df-b969cdc1d95d	18cfb989-6d16-4c8f-896d-c5ddffd983ed	Педикюр	Лучший в мире педикюр	1000	1500
+4ad6b313-3026-43f8-99df-b969cdc1d95d	fde308d8-5bbc-4b0c-8b51-e40aec3e3833	стрижка	nice service	1000	1500
+\.
+
+
+--
+-- Data for Name: servicetomaster; Type: TABLE DATA; Schema: public; Owner: glebvasyutin
+--
+
+COPY public.servicetomaster (salonid, serviceid, masterid) FROM stdin;
 \.
 
 

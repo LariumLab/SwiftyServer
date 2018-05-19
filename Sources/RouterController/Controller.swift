@@ -28,31 +28,43 @@ public class Controller{
             try response.status(.notFound).end()
         }
         
-        // public api
+        // public API
         router.get("api/getCityList", handler: getCityList)
         
         router.get("api/getSalonListInCity", handler: getSalonListInCity)
         
         router.get("api/getSalonInfo", handler: getSalonInfo)
         
-        router.get("api/getSalonServices", handler: getSalonServices)//
+        router.get("api/getSalonServices", handler: getSalonServices)
         
-        router.get("api/getServiceMasters", handler: getServiceMasters)//
+        router.get("api/getServiceMasters", handler: getServiceMasters)
         
-        router.get("api/getMasterInfo", handler: getMasterInfo)//
+        router.get("api/getMasterInfo", handler: getMasterInfo)
         
-        router.get("api/getMasterSchedule", handler: getMasterSchedule)//
         
-        // salon private api
+        // salon private API
+        router.all("/", middleware: BodyParser())
+        
         router.post("api/salon/signUp", handler: postSalonSignUp)
         
         router.post("api/salon/signIn", handler: postSalonSignIn)
         
-        router.all("api/salon/postSalonInfo", middleware: BodyParser())
-        router.post("api/salon/postSalonInfo", handler: postSalonInfo)
+        router.post("api/salon/addSalonInfo", handler: postSalonInfo)
+        
+        router.post("api/salon/addService", handler: postSalonAddService)
+        
+        router.post("api/salon/addNewMasterToService", handler: postSalonAddNewMasterToService)
+        
+        router.post("api/salon/addExistingMasterToService", handler: postSalonAddExistingMasterToService)
+        
+        // client private API
+        router.post("api/client/signUp", handler: postClientSignUp)
+        
+        router.post("api/client/signIn", handler: postClientSignIn)
+        
         
     }
-    //
+    
     // Get private members of the class
     public func getRouter() -> Router {
         return self.router

@@ -8,7 +8,7 @@ let package = Package(
     products: [
         .executable(
             name: "SwiftyServer",
-            targets:  ["SwiftyServer", "RouterController","Data", "LogicalClasses"]
+            targets:  ["SwiftyServer", "RouterController","Data", "Classes"]
         )
     ],
     dependencies: [
@@ -23,11 +23,11 @@ let package = Package(
             dependencies: ["Kitura", "RouterController", "Data"]),
         .target(
             name: "RouterController",
-            dependencies: ["Kitura", "PerfectPostgreSQL", "LogicalClasses", "Data", "CryptoSwift","SwiftyJSON"]),
+            dependencies: ["Kitura", "PerfectPostgreSQL", "Classes", "Data", "CryptoSwift","SwiftyJSON"]),
         .target(
         name: "Data",
-            dependencies: ["PerfectPostgreSQL", "LogicalClasses"]),
+            dependencies: ["PerfectPostgreSQL", "Classes"]),
         .target(
-            name: "LogicalClasses"),
+            name: "Classes"),
     ]
 )
