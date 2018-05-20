@@ -64,12 +64,29 @@ CREATE TABLE public.client (
 ALTER TABLE public.client OWNER TO glebvasyutin;
 
 --
+-- Name: day; Type: TABLE; Schema: public; Owner: glebvasyutin
+--
+
+CREATE TABLE public.day (
+    masterid uuid,
+    name text NOT NULL,
+    isdayoff boolean NOT NULL,
+    starttime text NOT NULL,
+    endtime text NOT NULL,
+    "order" bigint NOT NULL
+);
+
+
+ALTER TABLE public.day OWNER TO glebvasyutin;
+
+--
 -- Name: master; Type: TABLE; Schema: public; Owner: glebvasyutin
 --
 
 CREATE TABLE public.master (
     salonid uuid NOT NULL,
-    name text NOT NULL
+    masterid uuid NOT NULL,
+    name text
 );
 
 
@@ -139,10 +156,42 @@ COPY public.client (clientid, login, token, phonenumber) FROM stdin;
 
 
 --
+-- Data for Name: day; Type: TABLE DATA; Schema: public; Owner: glebvasyutin
+--
+
+COPY public.day (masterid, name, isdayoff, starttime, endtime, "order") FROM stdin;
+4f5c002b-222d-4bf4-8624-7da548212943	Понедельник	t	10:00	21:00	1
+4f5c002b-222d-4bf4-8624-7da548212943	Вторник	t	10:00	21:00	2
+4f5c002b-222d-4bf4-8624-7da548212943	Среда	t	10:00	21:00	3
+4f5c002b-222d-4bf4-8624-7da548212943	Четверг	t	10:00	21:00	4
+4f5c002b-222d-4bf4-8624-7da548212943	Пятница	t	10:00	21:00	5
+4f5c002b-222d-4bf4-8624-7da548212943	Суббота	t	10:00	21:00	6
+4f5c002b-222d-4bf4-8624-7da548212943	Воскресение	t	10:00	21:00	7
+00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Понедельник	t	10:00	21:00	1
+00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Вторник	t	10:00	21:00	2
+00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Среда	t	10:00	21:00	3
+00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Четверг	t	10:00	21:00	4
+00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Пятница	t	10:00	21:00	5
+00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Суббота	t	10:00	21:00	6
+00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Воскресение	t	10:00	21:00	7
+60dbcfee-6c37-4b8a-9884-cff0663291d5	Понедельник	t	10:00	21:00	1
+60dbcfee-6c37-4b8a-9884-cff0663291d5	Вторник	t	10:00	21:00	2
+60dbcfee-6c37-4b8a-9884-cff0663291d5	Среда	t	10:00	21:00	3
+60dbcfee-6c37-4b8a-9884-cff0663291d5	Четверг	t	10:00	21:00	4
+60dbcfee-6c37-4b8a-9884-cff0663291d5	Пятница	t	10:00	21:00	5
+60dbcfee-6c37-4b8a-9884-cff0663291d5	Суббота	t	10:00	21:00	6
+60dbcfee-6c37-4b8a-9884-cff0663291d5	Воскресение	t	10:00	21:00	7
+\.
+
+
+--
 -- Data for Name: master; Type: TABLE DATA; Schema: public; Owner: glebvasyutin
 --
 
-COPY public.master (salonid, name) FROM stdin;
+COPY public.master (salonid, masterid, name) FROM stdin;
+4ad6b313-3026-43f8-99df-b969cdc1d95d	4f5c002b-222d-4bf4-8624-7da548212943	Коля Петров
+4ad6b313-3026-43f8-99df-b969cdc1d95d	00ce6d0e-7522-4697-a4e3-f8baac7c20a9	Глеб Васютин
+4ad6b313-3026-43f8-99df-b969cdc1d95d	60dbcfee-6c37-4b8a-9884-cff0663291d5	Иванов Петр
 \.
 
 
@@ -166,6 +215,7 @@ c69fbe76-ee7d-4832-8c60-28b4bb609f40	beautyfactory	Фабрика красоты
 COPY public.service (salonid, serviceid, name, description, pricefrom, priceto) FROM stdin;
 4ad6b313-3026-43f8-99df-b969cdc1d95d	18cfb989-6d16-4c8f-896d-c5ddffd983ed	Педикюр	Лучший в мире педикюр	1000	1500
 4ad6b313-3026-43f8-99df-b969cdc1d95d	fde308d8-5bbc-4b0c-8b51-e40aec3e3833	стрижка	nice service	1000	1500
+4ad6b313-3026-43f8-99df-b969cdc1d95d	228fd9b0-5d42-477b-8e6b-6e48ef8075b6	Педикюр	Лучший в мире педикюр	1000	1500
 \.
 
 
@@ -174,6 +224,9 @@ COPY public.service (salonid, serviceid, name, description, pricefrom, priceto) 
 --
 
 COPY public.servicetomaster (salonid, serviceid, masterid) FROM stdin;
+4ad6b313-3026-43f8-99df-b969cdc1d95d	18cfb989-6d16-4c8f-896d-c5ddffd983ed	4f5c002b-222d-4bf4-8624-7da548212943
+4ad6b313-3026-43f8-99df-b969cdc1d95d	18cfb989-6d16-4c8f-896d-c5ddffd983ed	00ce6d0e-7522-4697-a4e3-f8baac7c20a9
+4ad6b313-3026-43f8-99df-b969cdc1d95d	18cfb989-6d16-4c8f-896d-c5ddffd983ed	60dbcfee-6c37-4b8a-9884-cff0663291d5
 \.
 
 
