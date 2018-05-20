@@ -88,8 +88,8 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
-        let salonTable = self.dataBase.serviceTable
-        let query = salonTable.where(\Service.salonID == salonUUID)
+        let serviceTable = self.dataBase.serviceTable
+        let query = serviceTable.where(\Service.salonID == salonUUID)
         var services: [Service] = []
         let values = try query.select()
         for service in values{

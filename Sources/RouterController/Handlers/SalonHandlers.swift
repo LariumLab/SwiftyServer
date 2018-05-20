@@ -140,16 +140,8 @@ extension Controller{
         let schedule: [Day]
     }
     
-    func postSalonAddNewMasterToService(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+    func postSalonAddNewMaster(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
         guard let token = request.queryParameters["token"], token != "" else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let serviceID = request.queryParameters["serviceID"], serviceID != "" else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let serviceUUID = UUID(uuidString: serviceID) else{
             try response.status(.badRequest).end()
             return
         }
@@ -172,16 +164,13 @@ extension Controller{
             let newMaster = Master(salonID: salonID, masterID: UUID(), services: nil, name: masterInfo.name, schedule: masterInfo.schedule)
             let masterTable = self.dataBase.masterTable
             try masterTable.insert(newMaster)
-            let serviceToMasterTable = self.dataBase.serviceToMasterTable
-            try serviceToMasterTable.insert(ServiceToMaster(salonID: salonID,serviceID: serviceUUID,masterID: newMaster.masterID))
         }
         try response.status(.OK).end()
-        
     }
     
 //************************************************************************************************************************//
     
-    func postSalonAddExistingMasterToService(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+    func postSalonAddMasterToService(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
         guard let token = request.queryParameters["token"], token != "" else{
             try response.status(.badRequest).end()
             return
