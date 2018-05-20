@@ -14,7 +14,18 @@ import Foundation
     public let masters: [Master]?
     public let appointments: [Appointment]?
     
-    public init(salonID: UUID = UUID(), nickName: String = "", customName: String = "", phoneNumber: String = "", description: String = "", city: String = "", address: String = "", token: String = "", services: [Service]? = nil, masters: [Master]? = nil, appointments: [Appointment]? = nil){
+    public init(salonID: UUID = UUID(),
+                nickName: String = "",
+                customName: String = "",
+                phoneNumber: String = "",
+                description: String = "",
+                city: String = "",
+                address: String = "",
+                token: String = "",
+                services: [Service]? = nil,
+                masters: [Master]? = nil,
+                appointments: [Appointment]? = nil)
+    {
         self.salonID = salonID
         self.nickName = nickName
         self.customName = customName

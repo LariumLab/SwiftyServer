@@ -10,9 +10,9 @@ extension Controller{
     
     func getCityList(_ : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
         let salonTable = self.dataBase.salonTable
-        let values = try salonTable.order(by: \.city).where(\Salon.city != "").select()
+        let salonValues = try salonTable.order(by: \.city).where(\Salon.city != "").select()
         var citySet: [String] = []
-        for salon in values{
+        for salon in salonValues{
             if ((citySet.count == 0) || (salon.city != citySet.last)){
                 citySet.append(salon.city)
             }
@@ -34,9 +34,9 @@ extension Controller{
             return
         }
         let salonTable = self.dataBase.salonTable
-        let values = try salonTable.where(\Salon.city == city).select()
+        let salonValues = try salonTable.where(\Salon.city == city).select()
         var salonSet: [SalonPreview] = []
-        for salon in values{
+        for salon in salonValues{
             salonSet.append(SalonPreview(customName: salon.customName, address: salon.address, ID: salon.salonID))
         }
         try response.status(.OK).send(salonSet).end()
@@ -51,48 +51,36 @@ extension Controller{
     }
     
     func getSalonInfo(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
-        guard let salonID = request.queryParameters["salonID"], salonID != "" else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let salonUUID = UUID(uuidString: salonID) else{
-            try response.status(.badRequest).end()
-            return
+        guard let salonID = request.queryParameters["salonID"], salonID != "",
+              let salonUUID = UUID(uuidString: salonID)
+        else{
+                try response.status(.badRequest).end()
+                return
         }
         let salonTable = self.dataBase.salonTable
-        let query = salonTable.where(\Salon.salonID == salonUUID)
-        let queryCount = try query.count()
-        if (queryCount == 0){
+        let salonQuery = salonTable.where(\Salon.salonID == salonUUID)
+        guard let salon = try salonQuery.first() else{
             try response.status(.badRequest).end()
             return
         }
-        if (queryCount > 1){
-            try response.status(.internalServerError).end()
-            return
-        }
-        let values = try query.select()
-        for salon in values{
-            let salonInfo = SalonInfo(nickName: salon.nickName, phoneNumber: salon.phoneNumber, description: salon.description)
-            try response.status(.OK).send(salonInfo).end()
-        }
+        let salonInfo = SalonInfo(nickName: salon.nickName, phoneNumber: salon.phoneNumber, description: salon.description)
+        try response.status(.OK).send(salonInfo).end()
     }
     
 //************************************************************************************************************************//
     
     func getSalonServices(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
-        guard let salonID = request.queryParameters["salonID"], salonID != "" else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let salonUUID = UUID(uuidString: salonID) else{
+        guard let salonID = request.queryParameters["salonID"], salonID != "",
+              let salonUUID = UUID(uuidString: salonID)
+        else{
             try response.status(.badRequest).end()
             return
         }
         let serviceTable = self.dataBase.serviceTable
-        let query = serviceTable.where(\Service.salonID == salonUUID)
+        let serviceQuery = serviceTable.where(\Service.salonID == salonUUID)
         var services: [Service] = []
-        let values = try query.select()
-        for service in values{
+        let serviceValues = try serviceQuery.select()
+        for service in serviceValues{
             services.append(service)
         }
         try response.status(.OK).send(services).end()
@@ -101,20 +89,29 @@ extension Controller{
 //************************************************************************************************************************//
     
     func getServiceMasters(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
-        guard let serviceID = request.queryParameters["serviceID"], serviceID != "" else{
+        guard let serviceID = request.queryParameters["serviceID"], serviceID != "",
+              let serviceUUID = UUID(uuidString: serviceID)
+        else{
             try response.status(.badRequest).end()
             return
         }
-        guard let serviceUUID = UUID(uuidString: serviceID) else{
-            try response.status(.badRequest).end()
-            return
-        }
+        let idTable = self.dataBase.serviceToMasterTable
+        let idQuery = idTable.where(\ServiceToMaster.serviceID == serviceUUID)
+        let idValues = try idQuery.select()
         let masterTable = self.dataBase.masterTable
-        let query = try masterTable.join(\.services, with: ServiceToMaster.self, on: \.masterID, equals: \.serviceID, and: \.serviceID, is: \.serviceID).where(\Service.serviceID == serviceUUID)
-        let values = try query.select()
+        let dayTable = self.dataBase.dayTable
         var masters: [Master] = []
-        for master in values{
-            masters.append(master)
+        for masterToService in idValues{
+            let masterValues = try masterTable.where(\Master.masterID == masterToService.masterID).select()
+            for master in masterValues{
+                var schedule: [Day] = []
+                let scheduleValues = try dayTable.order(by: \.order).where(\Day.masterID == master.masterID).select()
+                for day in scheduleValues{
+                    schedule.append(day)
+                }
+                let newMaster = Master(salonID: master.salonID, masterID: master.masterID, services: nil, name: master.name, schedule: schedule)
+                masters.append(newMaster)
+            }
         }
         try response.status(.OK).send(masters).end()
     }
@@ -122,20 +119,25 @@ extension Controller{
 //************************************************************************************************************************//
     
     func getSalonMasters(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
-        guard let salonID = request.queryParameters["salonID"], salonID != "" else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let salonUUID = UUID(uuidString: salonID) else{
-            try response.status(.badRequest).end()
-            return
+        guard let salonID = request.queryParameters["salonID"], salonID != "",
+              let salonUUID = UUID(uuidString: salonID)
+        else{
+                try response.status(.badRequest).end()
+                return
         }
         let masterTable = self.dataBase.masterTable
-        let query = masterTable.where(\Master.salonID == salonUUID)
+        let masterQuery = masterTable.where(\Master.salonID == salonUUID)
         var masters: [Master] = []
-        let values = try query.select()
-        for master in values{
-            masters.append(master)
+        let masterValues = try masterQuery.select()
+        let dayTable = self.dataBase.dayTable
+        for master in masterValues{
+            var schedule: [Day] = []
+            let scheduleValues = try dayTable.order(by: \.order).where(\Day.masterID == master.masterID).select()
+            for day in scheduleValues{
+                schedule.append(day)
+            }
+            let newMaster = Master(salonID: master.salonID, masterID: master.masterID, services: nil, name: master.name, schedule: schedule)
+            masters.append(newMaster)
         }
         try response.status(.OK).send(masters).end()
     }
@@ -143,22 +145,29 @@ extension Controller{
 //************************************************************************************************************************//
     
     func getMasterInfo(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
-        guard let masterID = request.queryParameters["masterID"], masterID != "" else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let masterUUID = UUID(uuidString: masterID) else{
+        guard let masterID = request.queryParameters["masterID"], masterID != "",
+              let masterUUID = UUID(uuidString: masterID)
+        else{
             try response.status(.badRequest).end()
             return
         }
         let masterTable = self.dataBase.masterTable
-        let query = masterTable.where(\Master.masterID == masterUUID)
-        let values = try query.select()
-        for master in values{
-            try response.status(.OK).send(master).end()
+        let masterQuery = masterTable.where(\Master.masterID == masterUUID)
+        guard let master = try masterQuery.first() else{
+            try response.status(.badRequest).end()
+            return
         }
+        let dayTable = self.dataBase.dayTable
+        var schedule: [Day] = []
+        let scheduleValues = try dayTable.order(by: \.order).where(\Day.masterID == master.masterID).select()
+        for day in scheduleValues{
+            schedule.append(day)
+        }
+        let newMaster = Master(salonID: master.salonID, masterID: master.masterID, services: nil, name: master.name, schedule: schedule)
+        try response.status(.OK).send(newMaster).end()
     }
     
 //************************************************************************************************************************//
+
 
 }

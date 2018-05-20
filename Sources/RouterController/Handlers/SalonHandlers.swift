@@ -20,8 +20,8 @@ extension Controller{
             return
         }
         let salonTable = self.dataBase.salonTable
-        let query = salonTable.where(\Salon.nickName == nickName)
-        if (try query.count() != 0){
+        let salonQuery = salonTable.where(\Salon.nickName == nickName)
+        guard try salonQuery.count() == 0 else{
             try response.status(.conflict).end()
             return
         }
@@ -44,23 +44,16 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
-        let salonTable = self.dataBase.salonTable
-        let query = salonTable.where(\Salon.nickName == nickName)
-        if (try query.count() != 1){
-            try response.status(.badRequest).end()
-            return
-        }
         let salt = "SwiftyServer"
         let tokenString = nickName + salt + password
         let token = tokenString.md5()
-        let values = try query.select()
-        for salon in values{
-            if (salon.token == token){
-                try response.status(.OK).send(token).end()
-            }else{
-                try response.status(.badRequest).end()
-            }
+        let salonTable = self.dataBase.salonTable
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard try salonQuery.count() == 1 else{
+            try response.status(.badRequest).end()
+            return
         }
+        try response.status(.OK).send(token).end()
     }
     
 //************************************************************************************************************************//
@@ -79,9 +72,9 @@ extension Controller{
             return
         }
         let salonTable = self.dataBase.salonTable
-        let query = salonTable.where(\Salon.token == token)
-        if (try query.count() != 1){
-            try response.status(.forbidden).end()
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard try salonQuery.count() == 1 else{
+            try response.status(.badRequest).end()
             return
         }
         guard let body = request.body,
@@ -91,8 +84,12 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
-        let newSalon = Salon(customName: salonInfo.customName, phoneNumber: salonInfo.phoneNumber, description: salonInfo.description, city: salonInfo.city, address: salonInfo.address)
-        try query.update(newSalon, setKeys: \.customName, \.phoneNumber, \.description, \.city, \.address)
+        let newSalon = Salon(customName: salonInfo.customName,
+                             phoneNumber: salonInfo.phoneNumber,
+                             description: salonInfo.description,
+                             city: salonInfo.city,
+                             address: salonInfo.address)
+        try salonQuery.update(newSalon, setKeys: \.customName, \.phoneNumber, \.description, \.city, \.address)
         try response.status(.OK).end()
     }
     
@@ -111,25 +108,27 @@ extension Controller{
             return
         }
         let salonTable = self.dataBase.salonTable
-        let query = salonTable.where(\Salon.token == token)
-        if (try query.count() != 1){
-            try response.status(.forbidden).end()
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard let salon = try salonQuery.first() else{
+            try response.status(.badRequest).end()
             return
         }
-        let values = try query.select()
-        for salon in values{
-            let salonID = salon.salonID
-            guard let body = request.body,
-                let json = body.asJSON,
-                let serviceInfo = try? JSONDecoder().decode(ServiceInfo.self, from: JSON(json).rawData())
-                else{
-                    try response.status(.badRequest).end()
-                    return
-            }
-            let newService = Service(salonID: salonID, serviceID: UUID(), masters: nil, name: serviceInfo.name, description: serviceInfo.description, priceFrom: serviceInfo.priceFrom, priceTo: serviceInfo.priceTo)
-            let serviceTable = self.dataBase.serviceTable
-            try serviceTable.insert(newService)
+        guard let body = request.body,
+            let json = body.asJSON,
+            let serviceInfo = try? JSONDecoder().decode(ServiceInfo.self, from: JSON(json).rawData())
+        else{
+            try response.status(.badRequest).end()
+            return
         }
+        let newService = Service(salonID: salon.salonID,
+                                 serviceID: UUID(),
+                                 masters: nil,
+                                 name: serviceInfo.name,
+                                 description: serviceInfo.description,
+                                 priceFrom: serviceInfo.priceFrom,
+                                 priceTo: serviceInfo.priceTo)
+        let serviceTable = self.dataBase.serviceTable
+        try serviceTable.insert(newService)
         try response.status(.OK).end()
     }
     
@@ -146,24 +145,30 @@ extension Controller{
             return
         }
         let salonTable = self.dataBase.salonTable
-        let query = salonTable.where(\Salon.token == token)
-        if (try query.count() != 1){
-            try response.status(.forbidden).end()
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard let salon = try salonQuery.first() else{
+            try response.status(.badRequest).end()
             return
         }
-        let values = try query.select()
-        for salon in values{
-            let salonID = salon.salonID
-            guard let body = request.body,
-                let json = body.asJSON,
-                let masterInfo = try? JSONDecoder().decode(MasterInfo.self, from: JSON(json).rawData())
-                else{
-                    try response.status(.badRequest).end()
-                    return
-            }
-            let newMaster = Master(salonID: salonID, masterID: UUID(), services: nil, name: masterInfo.name, schedule: masterInfo.schedule)
-            let masterTable = self.dataBase.masterTable
-            try masterTable.insert(newMaster)
+        guard let body = request.body,
+            let json = body.asJSON,
+            let masterInfo = try? JSONDecoder().decode(MasterInfo.self, from: JSON(json).rawData())
+        else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let newMaster = Master(salonID: salon.salonID,
+                               masterID: UUID(),
+                               services: nil,
+                               name: masterInfo.name,
+                               schedule: nil)
+        let masterTable = self.dataBase.masterTable
+        try masterTable.insert(newMaster)
+        let dayTable = self.dataBase.dayTable
+        for day in masterInfo.schedule{
+            var newDay = day
+            newDay.masterID = newMaster.masterID
+            try dayTable.insert(newDay)
         }
         try response.status(.OK).end()
     }
@@ -175,48 +180,48 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
-        guard let serviceID = request.queryParameters["serviceID"], serviceID != "" else{
+        guard let serviceID = request.queryParameters["serviceID"], serviceID != "",
+              let serviceUUID = UUID(uuidString: serviceID)
+        else{
             try response.status(.badRequest).end()
             return
         }
-        guard let serviceUUID = UUID(uuidString: serviceID) else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let masterID = request.queryParameters["masterID"], masterID != "" else{
-            try response.status(.badRequest).end()
-            return
-        }
-        guard let masterUUID = UUID(uuidString: masterID) else{
+        guard let masterID = request.queryParameters["masterID"], masterID != "",
+              let masterUUID = UUID(uuidString: masterID)
+        else{
             try response.status(.badRequest).end()
             return
         }
         let salonTable = self.dataBase.salonTable
-        let query = salonTable.where(\Salon.token == token)
-        if (try query.count() != 1){
-            try response.status(.forbidden).end()
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard let salon = try salonQuery.first() else{
+            try response.status(.badRequest).end()
             return
         }
-        let values = try query.select()
-        for salon in values{
-            let salonID = salon.salonID
-            let serviceToMasterTable = self.dataBase.serviceToMasterTable
-            let masterTable = self.dataBase.masterTable
-            let checkQuery = try masterTable.join(\.services, with: ServiceToMaster.self, on: \.masterID, equals: \.serviceID, and: \.serviceID, is: \.serviceID).where(\Master.masterID == masterUUID)
-            if (try checkQuery.count() != 0){
-                try response.status(.badRequest).end()
-                return
-            }
-            else{
-                try serviceToMasterTable.insert(ServiceToMaster(salonID: salonID, serviceID: serviceUUID, masterID: masterUUID))
-            }
+        let serviceToMasterTable = self.dataBase.serviceToMasterTable
+        let checkQuery = serviceToMasterTable.where(\ServiceToMaster.masterID == masterUUID && \ServiceToMaster.serviceID == serviceUUID)
+        guard try checkQuery.count() == 0 else{
+            try response.status(.badRequest).end()
+            return
         }
+        try serviceToMasterTable.insert(ServiceToMaster(salonID: salon.salonID, serviceID: serviceUUID, masterID: masterUUID))
         try response.status(.OK).end()
     }
     
 //************************************************************************************************************************//
         
-    
+    func test(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+//        guard let ID = UUID(uuidString: "5eecdc72-b81c-4e58-af06-8b4acd0748c8") else{
+//            return
+//        }
+//        let day = Day(masterID: ID, name: "Monday", isDayOff: true, startTime: "10:00", endTime: "21:00")
+//        let master = Master(salonID: UUID(), masterID: ID, services: nil, name: "petya", schedule: nil)
+//        let masterTable = self.dataBase.masterTable
+//        let dayTable = self.dataBase.dayTable
+//        try masterTable.insert(master)
+//        try dayTable.insert(day)
+//        try response.status(.OK).end()
+    }
     
     
 }

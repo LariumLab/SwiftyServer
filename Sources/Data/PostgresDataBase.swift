@@ -13,6 +13,7 @@ public class PostgresDataBase{
     public let appointmentTable: Table<Appointment, Database<PostgresDatabaseConfiguration>>
     
     public let serviceToMasterTable: Table<ServiceToMaster, Database<PostgresDatabaseConfiguration>>
+    public let dayTable: Table<Day, Database<PostgresDatabaseConfiguration>>
     
     public init() throws{
         
@@ -20,6 +21,7 @@ public class PostgresDataBase{
         
         try dataBase.create(Client.self)
         try dataBase.create(Salon.self)
+        try dataBase.create(Day.self)
         try dataBase.create(ServiceToMaster.self)
         
         salonTable = dataBase.table(Salon.self)
@@ -29,6 +31,7 @@ public class PostgresDataBase{
         appointmentTable = dataBase.table(Appointment.self)
         
         serviceToMasterTable = dataBase.table(ServiceToMaster.self)
+        dayTable = dataBase.table(Day.self)
         
         try serviceTable.index(\.salonID)
         try masterTable.index(\.salonID)

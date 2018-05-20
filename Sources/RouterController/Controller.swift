@@ -57,6 +57,8 @@ public class Controller{
         
         router.post("api/salon/addMasterToService", handler: postSalonAddMasterToService)
         
+        router.get("api/salon/test", handler: test)
+        
         // client private API
         router.post("api/client/signUp", handler: postClientSignUp)
         
