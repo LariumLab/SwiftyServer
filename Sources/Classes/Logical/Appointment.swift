@@ -1,6 +1,7 @@
 import Foundation
 
 public struct Appointment: Codable{
+    public let appointmentID: UUID
     public let salonID: UUID
     public let serviceID: UUID
     public let masterID: UUID
@@ -15,7 +16,8 @@ public struct Appointment: Codable{
     public let serviceName: String
     public let price: String
     
-    public init(salonID: UUID,
+    public init(appointmentID: UUID,
+                salonID: UUID,
                 serviceID: UUID,
                 masterID: UUID,
                 clientID: UUID,
@@ -28,6 +30,7 @@ public struct Appointment: Codable{
                 serviceName: String,
                 price: String)
     {
+        self.appointmentID = appointmentID
         self.salonID = salonID
         self.serviceID = serviceID
         self.masterID = masterID

@@ -39,7 +39,11 @@ public class Controller{
         
         router.get("api/getServiceMasters", handler: getServiceMasters)
         
+        router.get("api/getSalonMasters", handler: getSalonMasters)
+        
         router.get("api/getMasterInfo", handler: getMasterInfo)
+        
+        router.get("api/getSalonImage", handler: getSalonImage)
         
         
         // salon private API
@@ -57,13 +61,25 @@ public class Controller{
         
         router.post("api/salon/addMasterToService", handler: postSalonAddMasterToService)
         
-        router.get("api/salon/test", handler: test)
+        router.post("api/salon/approveAppointment", handler: updateSalonApproveAppointment)
+        
+        router.get("api/salon/checkAppointments", handler: getSalonCheckAppointments)
+        
+        router.get("api/salon/getSalonID", handler: getSalonIDFromToken)
         
         // client private API
         router.post("api/client/signUp", handler: postClientSignUp)
         
         router.post("api/client/signIn", handler: postClientSignIn)
         
+        router.post("api/client/makeAppointment", handler: postClientMakeAppointment)
+        
+        router.get("api/client/checkAppointments", handler: getClientCheckAppointments)
+        
+        router.get("api/client/getProfile", handler: getClientProfile)
+        
+        // files
+        router.all("/files/images", middleware: StaticFileServer(path: "./Files"))
         
     }
     

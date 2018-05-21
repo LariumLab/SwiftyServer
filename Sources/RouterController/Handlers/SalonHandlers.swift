@@ -10,6 +10,14 @@ extension Controller{
 
 //************************************************************************************************************************//
     
+    fileprivate struct SalonInfo: Codable{
+        let customName: String
+        let phoneNumber: String
+        let description: String
+        let city: String
+        let address: String
+    }
+    
     func postSalonSignUp(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
         guard let nickName = request.queryParameters["nickName"], nickName != "" else{
             try response.status(.badRequest).end()
@@ -27,9 +35,23 @@ extension Controller{
         }
         let salt = "SwiftyServer"
         let tokenString = nickName + salt + password
-        let token = tokenString.md5()
-        let salon = Salon(nickName: nickName, token: token)
-        try salonTable.insert(salon)
+        let token = "S" + tokenString.md5()
+        guard let body = request.body,
+              let json = body.asJSON,
+              let salonInfo = try? JSONDecoder().decode(SalonInfo.self, from: JSON(json).rawData())
+        else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let newSalon = Salon(salonID: UUID(),
+                             nickName: nickName,
+                             customName: salonInfo.customName,
+                             phoneNumber: salonInfo.phoneNumber,
+                             description: salonInfo.description,
+                             city: salonInfo.city,
+                             address: salonInfo.address,
+                             token: token)
+        try salonTable.insert(newSalon)
         try response.status(.OK).send(token).end()
     }
     
@@ -46,7 +68,7 @@ extension Controller{
         }
         let salt = "SwiftyServer"
         let tokenString = nickName + salt + password
-        let token = tokenString.md5()
+        let token = "S" + tokenString.md5()
         let salonTable = self.dataBase.salonTable
         let salonQuery = salonTable.where(\Salon.token == token)
         guard try salonQuery.count() == 1 else{
@@ -57,14 +79,6 @@ extension Controller{
     }
     
 //************************************************************************************************************************//
-   
-    fileprivate struct SalonInfo: Codable{
-        let customName: String
-        let phoneNumber: String
-        let description: String
-        let city: String
-        let address: String
-    }
     
     func postSalonInfo(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
         guard let token = request.queryParameters["token"], token != "" else{
@@ -114,8 +128,8 @@ extension Controller{
             return
         }
         guard let body = request.body,
-            let json = body.asJSON,
-            let serviceInfo = try? JSONDecoder().decode(ServiceInfo.self, from: JSON(json).rawData())
+              let json = body.asJSON,
+              let serviceInfo = try? JSONDecoder().decode(ServiceInfo.self, from: JSON(json).rawData())
         else{
             try response.status(.badRequest).end()
             return
@@ -129,7 +143,7 @@ extension Controller{
                                  priceTo: serviceInfo.priceTo)
         let serviceTable = self.dataBase.serviceTable
         try serviceTable.insert(newService)
-        try response.status(.OK).end()
+        try response.status(.OK).send(newService.serviceID.uuidString).end()
     }
     
 //************************************************************************************************************************//
@@ -151,8 +165,8 @@ extension Controller{
             return
         }
         guard let body = request.body,
-            let json = body.asJSON,
-            let masterInfo = try? JSONDecoder().decode(MasterInfo.self, from: JSON(json).rawData())
+              let json = body.asJSON,
+              let masterInfo = try? JSONDecoder().decode(MasterInfo.self, from: JSON(json).rawData())
         else{
             try response.status(.badRequest).end()
             return
@@ -198,6 +212,18 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
+        let masterTable = self.dataBase.masterTable
+        let masterQuery = masterTable.where(\Master.masterID == masterUUID && \Master.salonID == salon.salonID)
+        guard try masterQuery.count() == 1 else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let serviceTable = self.dataBase.serviceTable
+        let serviceQuery = serviceTable.where(\Service.serviceID == serviceUUID && \Service.salonID == salon.salonID)
+        guard try serviceQuery.count() == 1 else{
+            try response.status(.badRequest).end()
+            return
+        }
         let serviceToMasterTable = self.dataBase.serviceToMasterTable
         let checkQuery = serviceToMasterTable.where(\ServiceToMaster.masterID == masterUUID && \ServiceToMaster.serviceID == serviceUUID)
         guard try checkQuery.count() == 0 else{
@@ -209,7 +235,86 @@ extension Controller{
     }
     
 //************************************************************************************************************************//
-        
+    
+    func getSalonCheckAppointments(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+        guard let token = request.queryParameters["token"], token != "" else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let salonTable = self.dataBase.salonTable
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard let salon = try salonQuery.first() else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let appointmentTable = self.dataBase.appointmentTable
+        let appQuery = appointmentTable.where(\Appointment.salonID == salon.salonID)
+        var appointmets: [Appointment] = []
+        let appValues = try appQuery.select()
+        for app in appValues{
+            appointmets.append(app)
+        }
+        try response.status(.OK).send(appointmets).end()
+    }
+    
+//************************************************************************************************************************//
+    
+    func updateSalonApproveAppointment(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+        guard let token = request.queryParameters["token"], token != "" else{
+            try response.status(.badRequest).end()
+            return
+        }
+        guard let appID = request.queryParameters["appID"], appID != "",
+              let appUUID = UUID(uuidString: appID)
+        else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let salonTable = self.dataBase.salonTable
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard let salon = try salonQuery.first() else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let appTable = self.dataBase.appointmentTable
+        let appQuery = appTable.where(\Appointment.appointmentID == appUUID && \Appointment.salonID == salon.salonID)
+        guard try appQuery.count() == 1 else{
+            try response.status(.badRequest).end()
+            return
+        }
+        guard let body = request.body,
+              let json = body.asJSON,
+              let appInfo = try? JSONDecoder().decode(Appointment.self, from: JSON(json).rawData())
+        else{
+            try response.status(.badRequest).end()
+            return
+        }
+        if (appInfo.approved){
+            try appQuery.update(appInfo, setKeys: \.price, \.endDate, \.approved)
+        }else{
+            try appQuery.delete()
+        }
+        try response.status(.OK).end()
+    }
+    
+//************************************************************************************************************************//
+    
+    func getSalonIDFromToken(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+        guard let token = request.queryParameters["token"], token != "" else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let salonTable = self.dataBase.salonTable
+        let salonQuery = salonTable.where(\Salon.token == token)
+        guard let salon = try salonQuery.first() else{
+            try response.status(.badRequest).end()
+            return
+        }
+        try response.status(.OK).send(salon.salonID.uuidString).end()
+    }
+    
+//************************************************************************************************************************//
+
     func test(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
 //        guard let ID = UUID(uuidString: "5eecdc72-b81c-4e58-af06-8b4acd0748c8") else{
 //            return

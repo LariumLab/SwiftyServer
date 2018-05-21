@@ -15,6 +15,7 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
+        
         guard let name = request.queryParameters["name"], name != "" else{
             try response.status(.badRequest).end()
             return
@@ -31,7 +32,7 @@ extension Controller{
         }
         let salt = "SwiftyServer"
         let tokenString = phoneNumber + salt + password
-        let token = tokenString.md5()
+        let token = "C" + tokenString.md5()
         let client = Client(clientID: UUID(), phoneNumber: phoneNumber, name: name, token: token)
         try clientTable.insert(client)
         try response.status(.OK).send(token).end()
@@ -50,7 +51,7 @@ extension Controller{
         }
         let salt = "SwiftyServer"
         let tokenString = phoneNumber + salt + password
-        let token = tokenString.md5()
+        let token = "C" + tokenString.md5()
         let clientTable = self.dataBase.clientTable
         let clientQuery = clientTable.where(\Client.token == token)
         guard try clientQuery.count() == 1 else {
@@ -99,7 +100,8 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
-        let newApp = Appointment(salonID: app.salonID,
+        let newApp = Appointment(appointmentID: UUID(),
+                                 salonID: app.salonID,
                                  serviceID: app.serviceID,
                                  masterID: app.masterID,
                                  clientID: client.clientID,
@@ -141,4 +143,19 @@ extension Controller{
     
 //************************************************************************************************************************//
     
+    func getClientProfile(request: RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+        guard let token = request.queryParameters["token"], token != "" else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let clientTable = self.dataBase.clientTable
+        let clientQuery = clientTable.where(\Client.token == token)
+        guard let client = try clientQuery.first() else{
+            try response.status(.badRequest).end()
+            return
+        }
+        try response.status(.OK).send(client).end()
+    }
+    
+//************************************************************************************************************************//
 }

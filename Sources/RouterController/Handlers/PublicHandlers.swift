@@ -169,5 +169,24 @@ extension Controller{
     
 //************************************************************************************************************************//
 
+    func getSalonImage(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+        guard let salonID = request.queryParameters["salonID"], salonID != "",
+            let salonUUID = UUID(uuidString: salonID)
+            else{
+                try response.status(.badRequest).end()
+                return
+        }
+        let salonTable = self.dataBase.salonTable
+        let salonQuery = salonTable.where(\Salon.salonID == salonUUID)
+        guard let salon = try salonQuery.first() else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let redirect = "/files/images/" + salon.nickName + ".jpg"
+        try response.redirect(redirect).end()
+        // rework pls
+    }
+    
+//************************************************************************************************************************//
 
 }
