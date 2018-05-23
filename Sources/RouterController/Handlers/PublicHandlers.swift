@@ -48,6 +48,10 @@ extension Controller{
         let nickName: String
         let phoneNumber: String
         let description: String
+        let salonID: String
+        let city: String
+        let address: String
+        let customName: String
     }
     
     func getSalonInfo(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
@@ -63,7 +67,13 @@ extension Controller{
             try response.status(.badRequest).end()
             return
         }
-        let salonInfo = SalonInfo(nickName: salon.nickName, phoneNumber: salon.phoneNumber, description: salon.description)
+        let salonInfo = SalonInfo(nickName: salon.nickName,
+                                  phoneNumber: salon.phoneNumber,
+                                  description: salon.description,
+                                  salonID: salon.salonID.uuidString,
+                                  city: salon.city,
+                                  address: salon.address,
+                                  customName: salon.customName)
         try response.status(.OK).send(salonInfo).end()
     }
     
@@ -189,4 +199,33 @@ extension Controller{
     
 //************************************************************************************************************************//
 
+    func postSignIn(request : RouterRequest, response: RouterResponse, _ : @escaping () -> Void) throws {
+        guard let login = request.queryParameters["login"], login != "" else{
+            try response.status(.badRequest).end()
+            return
+        }
+        guard let password = request.queryParameters["password"], password != "" else{
+            try response.status(.badRequest).end()
+            return
+        }
+        let salt = "SwiftyServer"
+        let tokenString = login + salt + password
+        let salonToken = "S" + tokenString.md5()
+        let salonTable = self.dataBase.salonTable
+        let salonQuery = salonTable.where(\Salon.token == salonToken)
+        if try salonQuery.count() == 1{
+            try response.status(.OK).send(salonToken).end()
+            return
+        }
+        let clientToken = "C" + tokenString.md5()
+        let clientTable = self.dataBase.clientTable
+        let clientQuery = clientTable.where(\Client.token == clientToken)
+        if try clientQuery.count() == 1{
+            try response.status(.OK).send(clientToken).end()
+            return
+        }
+        try response.status(.badRequest).end()
+    }
+    
+    
 }

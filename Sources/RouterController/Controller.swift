@@ -45,6 +45,8 @@ public class Controller{
         
         router.get("api/getSalonImage", handler: getSalonImage)
         
+        router.post("api/signIn", handler: postSignIn)
+        
         
         // salon private API
         router.all("/", middleware: BodyParser())
